@@ -1,0 +1,31 @@
+{
+    "name": "supsign/also",
+    "description": "Laravel Extension for Also",
+    "keywords": ["composer", "script", "also"],
+    "license": "MIT",
+    "authors": [{
+        "name": "Fabrizio Cocco",
+        "email": "fabrizio.cocco@supsign.ch"
+    }],
+    "autoload": {
+        "psr-4": {
+            "Supsign\\Also\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Supsign\\Also\\AlsoServiceProvider"
+            ],
+            "aliases": {
+                "AlsoEDI": "Supsign\\Also\\AlsoEDI",
+                "AlsoImportProducts": "Supsign\\Also\\AlsoImportProducts",
+                "AlsoImportPrices": "Supsign\\Also\\AlsoImportPrices"
+
+            }
+        }
+    },
+    "require": {
+        "nicolab/php-ftp-client": "^1.5"
+    }
+}
