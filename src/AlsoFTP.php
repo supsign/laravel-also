@@ -9,14 +9,12 @@ class AlsoFTP
 // Noch Auslagern in .env und Config
    
 
-  protected
-  $ftp = null;
 
     public function __construct() {
       
-           $host = 'ftp.competec.ch';
-           $login = 'A273237';
-           $password = '4KbddyPN';
+           $host = 'ftpconnectch.also.com';
+           $login = 'legedohifefidi';
+           $password = 'kecezasazoti';
        
         $this->ftp = new \FtpClient\FtpClient();
         $this->ftp->connect($host);
@@ -24,6 +22,7 @@ class AlsoFTP
 
         return $this;
     }
+
 
 
         public function setFile($file){
