@@ -6,40 +6,45 @@ use Config;
 
 class AlsoFTP
 {
-// Noch Auslagern in .env und Config
-   
 
-
-    public function __construct() {
-      
-           $host = 'ftpconnectch.also.com';
-           $login = 'legedohifefidi';
-           $password = 'kecezasazoti';
-       
+    public function __construct() {       
         $this->ftp = new \FtpClient\FtpClient();
-        $this->ftp->connect($host);
-        $this->ftp->login($login, $password);
+        $this->ftp->connect(env('ALSO_FTP_HOST'));
+        $this->ftp->login(env('ALSO_FTP_LOGIN'), env('ALSO_FTP_PASSWORD'));
 
         return $this;
     }
 
+    protected function download($file)
+    {
+        file_put_contents(storage_path().'/'.$file, $this->ftp->getContent($file));
+
+        return $this;
+    }
+
+    public function downloadAData()
+    {
+        return $this->download('');
+    }
+
+    public function downloadBData()
+    {
+        return $this->download('');
+    }
 
 
-        public function setFile($file){
-            return $this;
-        }
-
-
-    public function importPrices(){
+    protected function importPrices()
+    {
 
     }
 
-    protected function importPrice(){
+    protected function importPrice()
+    {
 
     }
 
+    public function test() 
+    {
 
-
-
- 
+    }
 }
