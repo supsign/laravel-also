@@ -2,8 +2,6 @@
 
 namespace Supsign\Also;
 
-use Config;
-
 class AlsoFTP
 {
 
