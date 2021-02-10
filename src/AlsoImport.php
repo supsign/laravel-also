@@ -6,6 +6,7 @@ use App\CronTracker;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Supsign\LaravelCsvReader\CsvReader;
+use ZipArchive;
 
 class AlsoImport extends CsvReader
 {
@@ -14,6 +15,7 @@ class AlsoImport extends CsvReader
 		$logPath = 'logs/',
 		$downloadPath = 'imports/',
 		$soap = null,
+		$sourceFile = 'pricelist-2.csv.zip',
 		$tracker = null;
 
 	public function __construct()
@@ -30,7 +32,28 @@ class AlsoImport extends CsvReader
 	        ->setRemoteFile($this->sourceFile)
 	        ->downloadFile();
 
+	    return $this->extractFile();
+	}
+
+	public function extractFile()
+	{
+	    $this->tracker->extracting();
+
+	    $zip = new ZipArchive;
+
+	    if ($zip->open(Storage::path($this->downloadPath.$this->sourceFile))) {
+			$zip->extractTo(Storage::path($this->downloadPath));
+			$zip->close();
+	    } else {
+	    	throw new Exception('Failed to unzip '.$this->sourceFile, 1);
+	    }
+
 	    return $this;
+	}
+
+	public function import()
+	{
+		return $this->downloadFile();
 	}
 
 	public function writeLog($data)
