@@ -2,47 +2,12 @@
 
 namespace Supsign\Also;
 
-class AlsoFTP
+use Supsign\LaravelFtpConnector\FtpConnector;
+
+class AlsoFTP extends FtpConnector
 {
-
-    public function __construct() {       
-        $this->ftp = new \FtpClient\FtpClient();
-        $this->ftp->connect(env('ALSO_FTP_HOST'));
-        $this->ftp->login(env('ALSO_FTP_LOGIN'), env('ALSO_FTP_PASSWORD'));
-
-        return $this;
-    }
-
-    protected function download($file)
+    public function __construct() 
     {
-        file_put_contents(storage_path().'/'.$file, $this->ftp->getContent($file));
-
-        return $this;
-    }
-
-    public function downloadAData()
-    {
-        return $this->download('');
-    }
-
-    public function downloadBData()
-    {
-        return $this->download('');
-    }
-
-
-    protected function importPrices()
-    {
-
-    }
-
-    protected function importPrice()
-    {
-
-    }
-
-    public function test() 
-    {
-
+        return parent::__construct('ALSO');
     }
 }

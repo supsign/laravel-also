@@ -4,7 +4,7 @@ namespace Supsign\Also;
 
 use Config;
 
-class AlsoImportPrices extends AlsoFTP
+class AlsoImportPrices extends AlsoImport
 {
 
 

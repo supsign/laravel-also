@@ -4,13 +4,10 @@ namespace Supsign\Also;
 
 use Config;
 
-class AlsoImportProducts extends AlsoFTP
+class AlsoImportProducts extends AlsoImport
 {
 
-    public function test() {
 
-    return $this->ftp;
-    }
 
 
  
