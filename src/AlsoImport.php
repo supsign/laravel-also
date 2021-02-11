@@ -4,6 +4,7 @@ namespace Supsign\Also;
 
 use App\CronTracker;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Facades\Storage;
 use Supsign\LaravelCsvReader\CsvReader;
 use ZipArchive;
@@ -11,11 +12,86 @@ use ZipArchive;
 class AlsoImport extends CsvReader
 {
 	protected 
+		$fieldAddresses = [
+			'ProductID',
+			'ManufacturerPartNumber',
+			'AvailableQuantity',
+			'NetPrice',
+			'ManufacturerName',
+			'MinimumOrderQuantity',
+			'BasePriceQuantity',
+			'ShippingLocation',
+			'Bonus',
+			'EuropeanArticleNumber',
+			'Description',
+			'NetRetailPrice',
+			'CategoryText1',
+			'CategoryText2',
+			'CategoryText3',
+			'EndOfLife',
+			'GrossMass',
+			'IsReturnable',
+			'IsCancelable',
+			'ShortDescription',
+			'WarrantyText',
+			'PlanningType',
+			'FollowUpProduct',
+			'CashDiscount',
+			'ReplenishmentTime',
+			'AvailableNextDate',
+			'AvailableNextQuantity',
+			'AvailabilityDate',
+			'AvailabilityTime',
+			'Status',
+			'ProductStatus',
+			'WarrantyID',
+			'WarrantyMonths',
+			'ProductType',
+			'CNetImgageID',
+			'CNetCategoryText1',
+			'CNetCategoryText2',
+			'CNetCategoryID',
+			'CNetDataAvailable',
+			'CategoryIDN',
+			'CategoryID',
+			'VatRate',
+			'HierarchyID',
+			'VatAmount',
+			'PackageLength',
+			'PackageWidth',
+			'PackageHeight',
+			'AbcIndicator',
+			'CountryOfOrigin',
+			'CommodityCode',
+			'HierarchyText1',
+			'HierarchyText2',
+			'HierarchyText3',
+			'UnitOfMass',
+			'Currency',
+			'UnitOfLength',
+			'ManufacturerID',
+			'NetPriceLastDay',
+			'SalesPct2',
+			'SalesRank2',
+			'CustomerProductID',
+			'SalesPct3',
+			'SalesRank3',
+			'Serialnumbers',
+			'eClass',
+			'DisChainStatus',
+			'EsdProductID',
+			'Assortment',
+			'BasePriceQuantityUnit',
+			'ProductLine',
+			'PackagingUnit'
+		],
+		$lineDelimiter = ';',
 		$logFile = 'AlsoLog.txt',
 		$logPath = 'logs/',
 		$downloadPath = 'imports/',
 		$soap = null,
-		$sourceFile = 'pricelist-2.csv.zip',
+		$sourceFile = '0010875889.csv',
+		$downloadFile = 'pricelist-2.csv.zip',
 		$tracker = null;
 
 	public function __construct()
@@ -23,29 +99,29 @@ class AlsoImport extends CsvReader
 		$this->tracker = CronTracker::firstOrCreate(['class' => static::class]);
 	}
 
-	public function downloadFile()
+	protected function downloadFile()
 	{
 		$this->tracker->downloading();
 
 	    (new AlsoFTP)
-	        ->setLocalFile(Storage::path($this->downloadPath.$this->sourceFile))
-	        ->setRemoteFile($this->sourceFile)
+	        ->setLocalFile(Storage::path($this->downloadPath.$this->downloadFile))
+	        ->setRemoteFile($this->downloadFile)
 	        ->downloadFile();
 
 	    return $this->extractFile();
 	}
 
-	public function extractFile()
+	protected function extractFile()
 	{
 	    $this->tracker->extracting();
 
 	    $zip = new ZipArchive;
 
-	    if ($zip->open(Storage::path($this->downloadPath.$this->sourceFile))) {
+	    if ($zip->open(Storage::path($this->downloadPath.$this->downloadFile))) {
 			$zip->extractTo(Storage::path($this->downloadPath));
 			$zip->close();
 	    } else {
-	    	throw new Exception('Failed to unzip '.$this->sourceFile, 1);
+	    	throw new Exception('Failed to unzip '.$this->downloadFile, 1);
 	    }
 
 	    return $this;
@@ -53,10 +129,39 @@ class AlsoImport extends CsvReader
 
 	public function import()
 	{
-		return $this->downloadFile();
+		$this->tracker->downloading();
+		try {
+			// $this->downloadFile();
+			$this->tracker->parsing();
+			$this->importProducts();
+		} catch (Exception $e) {
+			$this->writeLog('Caught exception: '.$e->getMessage());
+			$this->tracker->error()->stop();
+			return $this;
+		}
+
+		return $this;
 	}
 
-	public function writeLog($data)
+	protected function importLine()
+	{
+		// $product = Product::findOneOrNew([
+
+		// ]);
+
+		var_dump($this->line);
+	}
+
+	protected function importProducts()
+	{
+		$this
+			->setDirectory(Storage::path($this->downloadPath))
+			->setFileName($this->sourceFile);
+		
+		parent::import();
+	}
+
+	protected function writeLog($data)
 	{
 		if (!is_array($data))
 			$data = [$data];
