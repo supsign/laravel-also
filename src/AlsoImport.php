@@ -134,7 +134,7 @@ class AlsoImport extends CsvReader
 	public function import()
 	{
 		$this->tracker->downloading();
-		
+
 		try {
 			$this->downloadFile();
 			$this->tracker->parsing();
@@ -145,42 +145,51 @@ class AlsoImport extends CsvReader
 			return $this;
 		}
 
+		$this->tracker->complete();
+
 		return $this;
 	}
 
 	protected function importLine()
 	{
-		if (!in_array($this->line['ManufacturerName'], $this->tmp))
-			$this->tmp[] = $this->line['ManufacturerName'];
-		else 
-			return $this;
+		try {
+			$this->tracker->progress();
 
-		$manufacturer = Manufacturer::firstOrNew([
-			'name' => $this->line['ManufacturerName']
-		]);
+			if (!in_array($this->line['ManufacturerName'], $this->tmp))
+				$this->tmp[] = $this->line['ManufacturerName'];
+			else 
+				return $this;
 
-		if (!$manufacturer->isDirty()) {
-			$manufacturer->also_name = $this->line['ManufacturerName'];
-			$manufacturer->save();
-		} else 
-			return $this;
+			$manufacturer = Manufacturer::firstOrNew([
+				'name' => $this->line['ManufacturerName']
+			]);
 
-		$product = Product::where([
-			'manufacturer_id' => $manufacturer->id,
-			'manufacturer_number' => $this->line['ManufacturerPartNumber']
-		])->first();
+			if (!$manufacturer->isDirty()) {
+				$manufacturer->also_name = $this->line['ManufacturerName'];
+				$manufacturer->save();
+			} else 
+				return $this;
 
-		if (!$product)
-			return $this;
+			$product = Product::where([
+				'manufacturer_id' => $manufacturer->id,
+				'manufacturer_number' => $this->line['ManufacturerPartNumber']
+			])->first();
 
-		$productSupplier = ProductSupplier::firstOrNew([
-			'product_id' => $product->id,
-			'supplier_product_id' => $this->line['ProductID'], 
-			'supplier_id' => 2
-		]);
+			if (!$product)
+				return $this;
 
-		$productSupplier->last_seen = now();
-		$productSupplier->save();
+			$productSupplier = ProductSupplier::firstOrNew([
+				'product_id' => $product->id,
+				'supplier_product_id' => $this->line['ProductID'], 
+				'supplier_id' => 2
+			]);
+
+			$productSupplier->last_seen = now();
+			$productSupplier->save();
+		} catch (Exception $e) {
+			$this->writeLog('Caught exception: '.$e->getMessage());
+			$this->tracker->error();
+		}
 
 		return $this;
 	}
@@ -190,6 +199,8 @@ class AlsoImport extends CsvReader
 		$this
 			->setDirectory(Storage::path($this->downloadPath))
 			->setFileName($this->sourceFile);
+
+		$this->tracker->setProgressTarget(count($this->lines))->importing();
 		
 		parent::import();
 	}
