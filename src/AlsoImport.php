@@ -172,11 +172,6 @@ class AlsoImport extends CsvReader
 		try {
 			$this->tracker->progress();
 
-			if (!in_array($this->line['ManufacturerName'], $this->tmp))
-				$this->tmp[] = $this->line['ManufacturerName'];
-			else 
-				return $this;
-
 			$manufacturer = $this->getManufacturer();
 
 			if (!$manufacturer) {
