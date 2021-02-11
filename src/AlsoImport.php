@@ -3,6 +3,9 @@
 namespace Supsign\Also;
 
 use App\CronTracker;
+use App\Manufacturer;
+use App\Product;
+use App\ProductSupplier;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Storage;
@@ -12,6 +15,7 @@ use ZipArchive;
 class AlsoImport extends CsvReader
 {
 	protected 
+		$tmp = array(),
 		$fieldAddresses = [
 			'ProductID',
 			'ManufacturerPartNumber',
@@ -130,26 +134,54 @@ class AlsoImport extends CsvReader
 	public function import()
 	{
 		$this->tracker->downloading();
-		try {
+		// try {
 			// $this->downloadFile();
 			$this->tracker->parsing();
 			$this->importProducts();
-		} catch (Exception $e) {
-			$this->writeLog('Caught exception: '.$e->getMessage());
-			$this->tracker->error()->stop();
-			return $this;
-		}
+		// } catch (Exception $e) {
+		// 	$this->writeLog('Caught exception: '.$e->getMessage());
+		// 	$this->tracker->error()->stop();
+		// 	return $this;
+		// }
 
 		return $this;
 	}
 
 	protected function importLine()
 	{
-		// $product = Product::findOneOrNew([
+		if (!in_array($this->line['ManufacturerName'], $this->tmp))
+			$this->tmp[] = $this->line['ManufacturerName'];
+		else 
+			return $this;
 
-		// ]);
+		$manufacturer = Manufacturer::firstOrNew([
+			'name' => $this->line['ManufacturerName']
+		]);
 
-		var_dump($this->line);
+		if (!$manufacturer->isDirty()) {
+			$manufacturer->also_name = $this->line['ManufacturerName'];
+			$manufacturer->save();
+		} else 
+			return $this;
+
+		$product = Product::where([
+			'manufacturer_id' => $manufacturer->id,
+			'manufacturer_number' => $this->line['ManufacturerPartNumber']
+		])->first();
+
+		if (!$product)
+			return $this;
+
+		$productSupplier = ProductSupplier::firstOrNew([
+			'product_id' => $product->id,
+			'supplier_product_id' => $this->line['ProductID'], 
+			'supplier_id' => 2
+		]);
+
+		$productSupplier->last_seen = now();
+		$productSupplier->save();
+
+		return $this;
 	}
 
 	protected function importProducts()
