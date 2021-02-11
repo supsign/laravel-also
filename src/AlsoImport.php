@@ -4,8 +4,10 @@ namespace Supsign\Also;
 
 use App\CronTracker;
 use App\Manufacturer;
+use App\Price;
 use App\Product;
 use App\ProductSupplier;
+use App\Vat;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Storage;
@@ -198,6 +200,18 @@ class AlsoImport extends CsvReader
 
 			$productSupplier->last_seen = now();
 			$productSupplier->save();
+
+			$vat = Vat::where('rate', $this->line['VatRate'])->first();
+
+			if (!$vat) {
+				throw new Exception('Tax Rate "'.$this->line['VatRate'].'"" not found', 1);
+			}
+
+			$price = Price::firstOrCreate([
+				'product_supplier_id' => $productSupplier->id,
+				'amount' => $this->line['NetPrice'],
+				'vat_id' => $vat->id,
+			]);
 		} catch (Exception $e) {
 			$this->writeLog('Caught exception: '.$e->getMessage());
 			$this->tracker->error();
