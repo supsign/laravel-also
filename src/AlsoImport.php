@@ -134,15 +134,16 @@ class AlsoImport extends CsvReader
 	public function import()
 	{
 		$this->tracker->downloading();
-		// try {
-			// $this->downloadFile();
+		
+		try {
+			$this->downloadFile();
 			$this->tracker->parsing();
 			$this->importProducts();
-		// } catch (Exception $e) {
-		// 	$this->writeLog('Caught exception: '.$e->getMessage());
-		// 	$this->tracker->error()->stop();
-		// 	return $this;
-		// }
+		} catch (Exception $e) {
+			$this->writeLog('Caught exception: '.$e->getMessage());
+			$this->tracker->error()->stop();
+			return $this;
+		}
 
 		return $this;
 	}
