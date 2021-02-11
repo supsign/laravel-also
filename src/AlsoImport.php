@@ -133,6 +133,9 @@ class AlsoImport extends CsvReader
 
 	public function import()
 	{
+		if (!$this->tracker->readyToRun())
+			return $this;
+		
 		$this->tracker->downloading();
 
 		try {
