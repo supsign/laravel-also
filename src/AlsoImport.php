@@ -131,11 +131,23 @@ class AlsoImport extends CsvReader
 	    return $this;
 	}
 
+	protected function getManufacturer()
+	{
+		foreach (['also_name', 'name'] AS $manufacturerName) {
+			$manufacturer = Manufacturer::where($manufacturerName, $this->line['ManufacturerName']);
+
+			if ($manufacturer->count() === 1)
+				return $manufacturer->first();
+		}
+
+		return null;
+	}
+
 	public function import()
 	{
 		if (!$this->tracker->readyToRun())
 			return $this;
-		
+
 		$this->tracker->downloading();
 
 		try {
@@ -163,15 +175,12 @@ class AlsoImport extends CsvReader
 			else 
 				return $this;
 
-			$manufacturer = Manufacturer::firstOrNew([
-				'name' => $this->line['ManufacturerName']
-			]);
+			$manufacturer = $this->getManufacturer();
 
-			if (!$manufacturer->isDirty()) {
-				$manufacturer->also_name = $this->line['ManufacturerName'];
-				$manufacturer->save();
-			} else 
+			if (!$manufacturer) {
+				$this->writeLog('Manufacturer "'.$this->line['ManufacturerName'].'" couldn\'t be matched');
 				return $this;
+			}
 
 			$product = Product::where([
 				'manufacturer_id' => $manufacturer->id,
