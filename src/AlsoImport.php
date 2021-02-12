@@ -109,15 +109,10 @@ class AlsoImport extends CsvReader
 	{
 		$this->tracker->downloading();
 
-		try {
-		    (new AlsoFTP)
+	    (new AlsoFTP)
 	        ->setLocalFile(Storage::path($this->downloadPath.$this->downloadFile))
 	        ->setRemoteFile($this->downloadFile)
 	        ->downloadFile();
-		} catch (Exception $e) {
-			$this->writeLog('Caught exception: '.$e->getMessage());
-			$this->tracker->error()->stop();
-		}
 
 	    return $this->extractFile();
 	}
