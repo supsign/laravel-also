@@ -17,7 +17,7 @@ use ZipArchive;
 class AlsoImport extends CsvReader
 {
 	protected 
-		$tmp = array(),
+		$downloadPath = 'imports/',
 		$fieldAddresses = [
 			'ProductID',
 			'ManufacturerPartNumber',
@@ -94,7 +94,7 @@ class AlsoImport extends CsvReader
 		$lineDelimiter = ';',
 		$logFile = 'AlsoLog.txt',
 		$logPath = 'logs/',
-		$downloadPath = 'imports/',
+		$manufacturerLog = [], 
 		$soap = null,
 		$sourceFile = '0010875889.csv',
 		$downloadFile = 'pricelist-2.csv.zip',
@@ -178,7 +178,15 @@ class AlsoImport extends CsvReader
 			$manufacturer = $this->getManufacturer();
 
 			if (!$manufacturer) {
-				$this->writeLog('Manufacturer "'.$this->line['ManufacturerName'].'" couldn\'t be matched');
+				$tmp = $this->logFile;
+				$this->logFile = 'AlsoManufacturerLog.txt';
+
+				if (!in_array($this->line['ManufacturerName'], $this->manufacturerLog)) {
+					$this->manufacturerLog[] = $this->line['ManufacturerName'];
+					$this->writeLog('Manufacturer "'.$this->line['ManufacturerName'].'" couldn\'t be matched');
+				}
+				
+				$this->logFile = $tmp;
 				return $this;
 			}
 
@@ -190,12 +198,12 @@ class AlsoImport extends CsvReader
 			if (!$product)
 				return $this;
 
-			$this->writeLog('Updating Price of: "'.$product->id.' - '.$product->name);
-
 			$productSupplier = ProductSupplier::firstOrNew([
 				'product_id' => $product->id,
 				'supplier_id' => 2
 			]);
+
+			$this->writeLog(($productSupplier->isClean() ? 'update' : 'create').' price of: "'.$product->id.' - '.$product->name);
 
 			$productSupplier->supplier_product_id = $this->line['ProductID'];
 			$productSupplier->last_seen = now();
