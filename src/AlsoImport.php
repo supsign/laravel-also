@@ -151,6 +151,8 @@ class AlsoImport extends CsvReader
 			return $this;
 
 		$this->tracker->downloading();
+		Storage::delete($this->logPath.$this->logFile);
+		Storage::delete($this->logPath.'AlsoManufacturerLog.txt');
 
 		try {
 			$this->downloadFile();
