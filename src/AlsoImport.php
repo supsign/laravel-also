@@ -128,12 +128,17 @@ class AlsoImport extends CsvReader
 
 	    $zip = new ZipArchive;
 
-	    if ($zip->open(Storage::path($this->downloadPath.$this->downloadFile))) {
-			$zip->extractTo(Storage::path($this->downloadPath));
-			$zip->close();
-	    } else {
-	    	throw new Exception('Failed to unzip '.$this->downloadFile, 1);
-	    }
+		try {
+		    if ($zip->open(Storage::path($this->downloadPath.$this->downloadFile))) {
+				$zip->extractTo(Storage::path($this->downloadPath));
+				$zip->close();
+		    } else {
+		    	throw new Exception('Failed to unzip '.$this->downloadFile, 1);
+		    }
+		} catch (Exception $e) {
+			$this->writeLog('Caught exception: '.$e->getMessage());
+			$this->tracker->stop();
+		}
 
 	    return $this;
 	}
