@@ -172,6 +172,9 @@ class AlsoImport extends CsvReader
 		try {
 			$this->tracker->progress();
 
+			if (!$this->line['NetPrice'])
+				return $this;
+
 			$manufacturer = $this->getManufacturer();
 
 			if (!$manufacturer) {
@@ -186,6 +189,8 @@ class AlsoImport extends CsvReader
 
 			if (!$product)
 				return $this;
+
+			$this->writeLog('Updating Price of: "'.$product->id.' - '.$product->name);
 
 			$productSupplier = ProductSupplier::firstOrNew([
 				'product_id' => $product->id,
