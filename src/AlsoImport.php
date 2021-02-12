@@ -194,20 +194,23 @@ class AlsoImport extends CsvReader
 
 			$productSupplier = ProductSupplier::firstOrNew([
 				'product_id' => $product->id,
-				'supplier_product_id' => $this->line['ProductID'], 
 				'supplier_id' => 2
 			]);
 
+			$productSupplier->supplier_product_id = $this->line['ProductID'];
 			$productSupplier->last_seen = now();
 			$productSupplier->save();
 
 			$vat = Vat::where('rate', $this->line['VatRate'])->first();
 
-			if (!$vat) {
+			if (!$vat)
 				throw new Exception('Tax Rate "'.$this->line['VatRate'].'"" not found', 1);
-			}
 
-			$price = Price::firstOrCreate([
+			if ($productSupplier->prices->last())
+				if ($productSupplier->prices->last()->amount == $this->line['NetPrice'])
+					return $this;
+
+			$price = Price::create([
 				'product_supplier_id' => $productSupplier->id,
 				'amount' => $this->line['NetPrice'],
 				'vat_id' => $vat->id,
@@ -224,11 +227,12 @@ class AlsoImport extends CsvReader
 	{
 		$this
 			->setDirectory(Storage::path($this->downloadPath))
-			->setFileName($this->sourceFile);
+			->setFileName($this->sourceFile)
+			->readFiles();
 
 		$this->tracker->setProgressTarget(count($this->lines))->importing();
 		
-		parent::import();
+		return parent::import();
 	}
 
 	protected function writeLog($data)
