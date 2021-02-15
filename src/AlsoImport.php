@@ -110,9 +110,9 @@ class AlsoImport extends CsvReader
 		$this->tracker->downloading();
 
 	    (new AlsoFTP)
-        ->setLocalFile(Storage::path($this->downloadPath.$this->downloadFile))
-        ->setRemoteFile($this->downloadFile)
-        ->downloadFile();
+	        ->setLocalFile(Storage::path($this->downloadPath.$this->downloadFile))
+	        ->setRemoteFile($this->downloadFile)
+	        ->downloadFile();
 
 	    return $this->extractFile();
 	}
@@ -205,7 +205,7 @@ class AlsoImport extends CsvReader
 				'supplier_id' => 2
 			]);
 
-			$this->writeLog(($productSupplier->isClean() ? 'update' : 'create').' price of: "'.$product->id.' - '.$product->name);
+			$this->writeLog(($productSupplier->id ? 'update' : 'create').' price of: "'.$product->id.' - '.$product->name);
 
 			$productSupplier->supplier_product_id = $this->line['ProductID'];
 			$productSupplier->last_seen = now();
