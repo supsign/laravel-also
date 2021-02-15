@@ -192,10 +192,11 @@ class AlsoImport extends CsvReader
 				return $this;
 			}
 
-			$product = Product::where([
+			$product = Product::match([
 				'manufacturer_id' => $manufacturer->id,
-				'manufacturer_number' => $this->line['ManufacturerPartNumber']
-			])->first();
+				'manufacturer_number' => $this->line['ManufacturerPartNumber'],
+				'ean' => $this->line['EuropeanArticleNumber'],
+			]);
 
 			if (!$product)
 				return $this;
