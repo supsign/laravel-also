@@ -209,19 +209,21 @@ class AlsoImport extends CsvReader
 			$this->writeLog(($productSupplier->id ? 'update' : 'create').' price of: "'.$product->id.' - '.$product->name);
 
 			$productSupplier->supplier_product_id = $this->line['ProductID'];
-			$productSupplier->last_seen = now();
 			$productSupplier->save();
+			$productSupplier->setLastSeen();
 
 			$vat = Vat::where('rate', $this->line['VatRate'])->first();
 
 			if (!$vat)
 				throw new Exception('Tax Rate "'.$this->line['VatRate'].'"" not found', 1);
 
-			if ($productSupplier->prices->last())
-				if ($productSupplier->prices->last()->amount == $this->line['NetPrice'])
+			if ($productSupplier->prices->last()) {
+				if ($productSupplier->prices->last()->amount == $this->line['NetPrice']) {
 					return $this;
+				}
+			}
 
-			$price = Price::create([
+			Price::create([
 				'product_supplier_id' => $productSupplier->id,
 				'amount' => $this->line['NetPrice'],
 				'vat_id' => $vat->id,
