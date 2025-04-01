@@ -2,7 +2,6 @@
 
 namespace Supsign\Also;
 
-use App\CronTracker;
 use App\Manufacturer;
 use App\Price;
 use App\Product;
@@ -97,18 +96,10 @@ class AlsoImport extends CsvReader
 		$manufacturerLog = [], 
 		$soap = null,
 		$sourceFile = '0010875889.csv',
-		$downloadFile = 'pricelist-2.csv.zip',
-		$tracker = null;
-
-	public function __construct()
-	{
-		$this->tracker = CronTracker::firstOrCreate(['class' => static::class]);
-	}
+		$downloadFile = 'pricelist-2.csv.zip';
 
 	protected function downloadFile()
 	{
-		$this->tracker->downloading();
-
 	    (new AlsoFTP)
 	        ->setLocalFile(Storage::path($this->downloadPath.$this->downloadFile))
 	        ->setRemoteFile($this->downloadFile)
@@ -119,8 +110,6 @@ class AlsoImport extends CsvReader
 
 	protected function extractFile()
 	{
-	    $this->tracker->extracting();
-
 	    $zip = new ZipArchive;
 
 	    if ($zip->open(Storage::path($this->downloadPath.$this->downloadFile))) {
@@ -138,8 +127,9 @@ class AlsoImport extends CsvReader
 		foreach (['also_name', 'name'] AS $manufacturerName) {
 			$manufacturer = Manufacturer::where($manufacturerName, $this->line['ManufacturerName']);
 
-			if ($manufacturer->count() === 1)
+			if ($manufacturer->count() === 1) {
 				return $manufacturer->first();
+			}
 		}
 
 		return null;
@@ -147,24 +137,17 @@ class AlsoImport extends CsvReader
 
 	public function import()
 	{
-		if (!$this->tracker->readyToRun())
-			return $this;
-
-		$this->tracker->downloading();
 		Storage::delete($this->logPath.$this->logFile);
 		Storage::delete($this->logPath.'AlsoManufacturerLog.txt');
 
 		try {
 			$this->downloadFile();
-			$this->tracker->parsing();
 			$this->importProducts();
 		} catch (Exception $e) {
 			$this->writeLog('Caught exception: '.$e->getMessage());
-			$this->tracker->stop();
+			
 			return $this;
 		}
-
-		$this->tracker->complete();
 
 		return $this;
 	}
@@ -172,10 +155,9 @@ class AlsoImport extends CsvReader
 	protected function importLine()
 	{
 		try {
-			$this->tracker->progress();
-
-			if (!$this->line['NetPrice'])
+			if (!$this->line['NetPrice']) {
 				return $this;
+			}
 
 			$manufacturer = $this->getManufacturer();
 
@@ -198,8 +180,9 @@ class AlsoImport extends CsvReader
 				'ean' => $this->line['EuropeanArticleNumber'],
 			]);
 
-			if (!$product)
+			if (!$product) {
 				return $this;
+			}
 
 			$productSupplier = ProductSupplier::firstOrNew([
 				'product_id' => $product->id,
@@ -214,8 +197,9 @@ class AlsoImport extends CsvReader
 
 			$vat = Vat::where('rate', $this->line['VatRate'])->first();
 
-			if (!$vat)
+			if (!$vat) {
 				throw new Exception('Tax Rate "'.$this->line['VatRate'].'"" not found', 1);
+			}
 
 			if ($productSupplier->prices->last()) {
 				if ($productSupplier->prices->last()->amount == $this->line['NetPrice']) {
@@ -230,7 +214,6 @@ class AlsoImport extends CsvReader
 			]);
 		} catch (Exception $e) {
 			$this->writeLog('Caught exception: '.$e->getMessage());
-			$this->tracker->error();
 		}
 
 		return $this;
@@ -242,19 +225,19 @@ class AlsoImport extends CsvReader
 			->setDirectory(Storage::path($this->downloadPath))
 			->setFileName($this->sourceFile)
 			->readFiles();
-
-		$this->tracker->setProgressTarget(count($this->lines))->importing();
 		
 		return parent::import();
 	}
 
 	protected function writeLog($data)
 	{
-		if (!is_array($data))
+		if (!is_array($data)) {
 			$data = [$data];
+		}
 
-		foreach ($data AS $line)
+		foreach ($data AS $line) {
 			$this->writeLogLine($line);
+		}
 
 		return $this;
 	}
